@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // ĐÃ THÊM useEffect
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { Dashboard } from './components/Dashboard';
@@ -24,6 +24,25 @@ export default function App() {
     return session ? JSON.parse(session).loggedIn : false;
   });
 
+  // ==========================================
+  // VỊ TRÍ 1: GẮN TIẾP BIẾN VÀ BỘ NHỚ (Dưới isLoggedIn)
+  // ==========================================
+  const [input, setInput] = useState('');
+  const [logs, setLogs] = useState([]);
+  const quickTags = ["Định khoản", "Luật 2005", "Thuế TNCN"];
+
+  // Tự động tải dữ liệu cũ khi mở trang
+  useEffect(() => {
+    const saved = localStorage.getItem('edu_logs');
+    if (saved) setLogs(JSON.parse(saved));
+  }, []);
+
+  // Tự động lưu dữ liệu mới mỗi khi nhật ký thay đổi
+  useEffect(() => {
+    localStorage.setItem('edu_logs', JSON.stringify(logs));
+  }, [logs]);
+  // ==========================================
+
   if (!isLoggedIn) {
     return (
       <>
@@ -46,7 +65,8 @@ export default function App() {
       case 'solver':
         return <Solver />;
       case 'logs':
-        return <Logs setActiveTab={setActiveTab} />;
+        // Gắn thêm logs vào component Logs để hiển thị
+        return <Logs setActiveTab={setActiveTab} logs={logs} setLogs={setLogs} />;
       case 'progress':
         return <Progress />;
       case 'pomodoro':
@@ -86,6 +106,37 @@ export default function App() {
             "mx-auto transition-all duration-300",
             activeTab === 'tutor' ? "max-w-none h-full" : "max-w-6xl"
           )}>
+
+            {/* ========================================== */}
+            {/* VỊ TRÍ 2: GẮN THANH TRA CỨU NHANH (Trên AnimatePresence) */}
+            {/* ========================================== */}
+            {activeTab !== 'tutor' && (
+              <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border border-slate-200">
+                <div className="flex gap-2 mb-3">
+                  {quickTags.map(tag => (
+                    <button 
+                      key={tag}
+                      onClick={() => setInput(tag)}
+                      className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Tra cứu nhanh Luật & Kế toán..." 
+                    className="flex-1 text-sm p-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Hỏi AI</button>
+                </div>
+              </div>
+            )}
+            {/* ========================================== */}
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
